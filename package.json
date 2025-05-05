@@ -1,6 +1,6 @@
 {
   "name": "literal-hell",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Escapes the cursed characters lurking in your JS/TS string literals — before your linter screams or your Vercel deploy has a nervous breakdown.",
   "main": "src/index.js",
   "bin": {
@@ -11,7 +11,14 @@
     "test": "echo \"No tests yet\" && exit 0"
   },
   "type": "commonjs",
-  "keywords": ["cli", "escape", "html", "quotes", "string literals", "eslint"],
+  "keywords": [
+    "cli",
+    "escape",
+    "html",
+    "quotes",
+    "string literals",
+    "eslint"
+  ],
   "author": "Carter Laren",
   "license": "MIT",
   "repository": {
