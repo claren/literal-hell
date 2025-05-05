@@ -1,0 +1,21 @@
+{
+  "name": "literal-hell",
+  "version": "0.1.0",
+  "description": "Escape problematic characters inside string literals in JS/TS to avoid linter, syntax, and rendering issues.",
+  "main": "src/index.js",
+  "bin": {
+    "literal-hell": "./bin/literal-hell.js"
+  },
+  "scripts": {
+    "start": "node ./bin/literal-hell.js"
+  },
+  "dependencies": {
+    "@babel/core": "^7.22.9",
+    "@babel/generator": "^7.22.5",
+    "@babel/parser": "^7.22.7",
+    "@babel/traverse": "^7.22.5",
+    "chalk": "^4.1.2",
+    "globby": "^11.1.0",
+    "inquirer": "^8.2.6"
+  }
+}
