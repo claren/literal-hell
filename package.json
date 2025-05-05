@@ -1,13 +1,25 @@
 {
   "name": "literal-hell",
   "version": "0.1.0",
-  "description": "Escape problematic characters inside string literals in JS/TS to avoid linter, syntax, and rendering issues.",
+  "description": "Escapes the cursed characters lurking in your JS/TS string literals — before your linter screams or your Vercel deploy has a nervous breakdown.",
   "main": "src/index.js",
   "bin": {
     "literal-hell": "./bin/literal-hell.js"
   },
   "scripts": {
-    "start": "node ./bin/literal-hell.js"
+    "start": "node ./bin/literal-hell.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "type": "commonjs",
+  "keywords": ["cli", "escape", "html", "quotes", "string literals", "eslint"],
+  "author": "Carter Laren",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/claren/literal-hell.git"
+  },
+  "engines": {
+    "node": ">=14"
   },
   "dependencies": {
     "@babel/core": "^7.22.9",
