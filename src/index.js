@@ -138,7 +138,10 @@ function containsHtmlEntities(str) {
   // Also check for potential double-escaped entities
   const doubleEscapedRegex = /&amp;(quot|apos|lt|gt);/g;
   
-  return entityRegex.test(str) || doubleEscapedRegex.test(str);
+  // Add check for numeric HTML entities (&#39; for single quote, etc.)
+  const numericEntityRegex = /&#(\d+);/g;
+  
+  return entityRegex.test(str) || doubleEscapedRegex.test(str) || numericEntityRegex.test(str);
 }
 
 // More advanced check for JSX content to prevent corruption
