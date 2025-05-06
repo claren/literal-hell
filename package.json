@@ -1,6 +1,6 @@
 {
   "name": "literal-hell",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Escapes the cursed characters lurking in your JS/TS string literals — before your linter screams or your Vercel deploy has a nervous breakdown.",
   "main": "src/index.js",
   "bin": {
