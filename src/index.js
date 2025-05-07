@@ -620,6 +620,26 @@ async function waitForAnyKey(message) {
   });
 }
 
+// Add this function to check if a string is in a React prop
+function isReactPropValue(path) {
+  // Check if parent is a JSXAttribute
+  if (path.parent && path.parent.type === 'JSXAttribute') {
+    return true;
+  }
+  
+  // Also check for JSX spread attributes with object properties
+  if (path.parent && 
+      path.parent.type === 'ObjectProperty' && 
+      path.parentPath && 
+      path.parentPath.parentPath && 
+      path.parentPath.parentPath.parent && 
+      path.parentPath.parentPath.parent.type === 'JSXSpreadAttribute') {
+    return true;
+  }
+  
+  return false;
+}
+
 async function processFile(filePath) {
   log(`Processing file: ${filePath}`);
   
@@ -665,6 +685,12 @@ async function processFile(filePath) {
       if (!original.includes("'") && !original.includes('"') && 
           !original.includes('<') && !original.includes('>') && 
           !original.includes('&')) {
+        return;
+      }
+      
+      // NEW: Skip React prop values
+      if (isReactPropValue(path)) {
+        log(`Skipping React prop value at ${filePath}:${path.node.loc.start.line}`, 'skip');
         return;
       }
       
