@@ -1020,71 +1020,69 @@ async function processFile(filePath) {
               // JSX text nodes are handled differently - we need to find the text directly
               if (original.includes('\n') || fix.rawValue.includes('\n')) {
                 // For multiline JSX text, we need a more careful approach
-                log(`Handling multiline JSX text replacement`, 'info');
+                log(`Handling multiline JSX text replacement for: "${original}"`, 'info');
                 
                 // Get the raw JSX text with correct whitespace
-                const rawValue = fix.rawValue;
-                const lines = rawValue.split('\n');
-                
-                // Calculate the number of lines this JSX text spans
-                const startLine = line;
-                const endLine = startLine + lines.length - 1;
-                
-                // Process each line individually to preserve whitespace
-                let succeeded = true;
-                for (let i = 0; i < lines.length; i++) {
-                  const currentLine = lines[i].trim();
-                  if (!currentLine) continue; // Skip empty lines
-                  
-                  // Find this line content in the file
-                  const fileLine = fileLines[startLine - 1 + i];
-                  if (!fileLine) {
-                    log(`Could not find line ${startLine + i} for multiline JSX text`, 'warning');
-                    succeeded = false;
+                const rawValue = fix.rawValue; // e.g., "\n    text with "quotes"\n  "
+                const originalTrimmed = fix.original; // e.g., "text with \"quotes\""
+                const escapedTrimmed = fix.escaped; // e.g., "text with &quot;quotes&quot;"
+
+                const astStartLine = fix.loc.start.line; // 1-indexed
+                const astEndLine = fix.loc.end.line;     // 1-indexed
+                const astStartCol = fix.loc.start.column; // 0-indexed, start of rawValue
+                const astEndCol = fix.loc.end.column;   // 0-indexed, end of rawValue
+
+                // Find the starting line and column of the *originalTrimmed* text within the rawValue
+                let currentLineOffset = 0;
+                let startLineOfOriginalInRaw = -1;
+                let startColOfOriginalInRaw = -1;
+
+                const rawValueLines = rawValue.split('\n');
+                for (let i = 0; i < rawValueLines.length; i++) {
+                  const lineOfRaw = rawValueLines[i];
+                  const indexOfOriginalInLine = lineOfRaw.indexOf(originalTrimmed);
+                  if (indexOfOriginalInLine !== -1) {
+                    startLineOfOriginalInRaw = i;
+                    startColOfOriginalInRaw = indexOfOriginalInLine;
                     break;
                   }
-                  
-                  // Replace apostrophes in this line
-                  if (currentLine.includes("'")) {
-                    // Find all occurrences of apostrophes in this line and replace them
-                    let newLine = fileLine;
-                    let pos = 0;
-                    while ((pos = newLine.indexOf("'", pos)) !== -1) {
-                      // Safety check: Skip if this apostrophe is inside a JSX tag
-                      if (isInsideJsxTag(newLine, pos)) {
-                        pos++; // Skip this one, it's inside a tag
-                        continue;
-                      }
-                      
-                      // Make sure we're not already in an HTML entity
-                      const context = newLine.substring(Math.max(0, pos - 5), pos);
-                      if (!context.includes('&apos')) {
-                        newLine = newLine.substring(0, pos) + '&apos;' + newLine.substring(pos + 1);
-                        pos += 6; // Length of &apos;
-                      } else {
-                        pos++; // Skip this one, it's already escaped
-                      }
-                    }
-                    
-                    // Update the line
-                    if (newLine !== fileLine) {
-                      fileLines[startLine - 1 + i] = newLine;
-      changed = true;
-                    }
-                  }
+                }
+
+                if (startLineOfOriginalInRaw === -1) {
+                  log(`Could not find trimmed original ("${originalTrimmed}") within rawValue ("${rawValue}"). Skipping.`, 'warning');
+                  break; // from while(true) - skip this fix
                 }
                 
-                if (succeeded) {
-                  log(`Replaced multiline JSX text apostrophes`, 'info');
+                // The actual line in the file where originalTrimmed starts
+                const targetFileLineIndex = astStartLine -1 + startLineOfOriginalInRaw;
+                // The actual column in that file line where originalTrimmed starts
+                const targetFileColumnIndex = (startLineOfOriginalInRaw === 0) ? astStartCol + startColOfOriginalInRaw : startColOfOriginalInRaw;
+
+                // Ensure the target line actually contains the start of the originalTrimmed text
+                const lineToModify = fileLines[targetFileLineIndex];
+                if (!lineToModify || !lineToModify.includes(originalTrimmed.split('\n')[0])) {
+                    log(`Multiline sanity check failed: target line does not seem to contain the start of "${originalTrimmed.split('\n')[0]}". Skipping.`, 'warning');
+                    break; // from while(true) - skip this fix
                 }
+
+                // At this point, we assume originalTrimmed is single-line for this replacement strategy,
+                // even if rawValue is multi-line. This simplification is based on current problem.
+                // If originalTrimmed itself could be multi-line, this logic would need to be more complex.
+                const beforeText = lineToModify.substring(0, targetFileColumnIndex);
+                const afterText = lineToModify.substring(targetFileColumnIndex + originalTrimmed.length);
+                
+                fileLines[targetFileLineIndex] = beforeText + escapedTrimmed + afterText;
+                changed = true;
+                log(`Replaced multiline-rawValue JSX: "${originalTrimmed}" with "${escapedTrimmed}"`, 'info');
+
               } else {
                 // Single line JSX text
-                const targetLine = fileLines[line - 1]; // locations are 1-indexed
+                const targetLine = fileLines[line - 1]; // line is fix.loc.start.line
                 
                 // CRITICAL: Skip any line that contains JSX tags to avoid damaging them
                 if (targetLine.includes('<') && targetLine.includes('>')) {
                   log(`Skipping single-line JSX with tags: ${targetLine.trim().substring(0, 50)}...`, 'skip');
-                  return;
+                  return; // User has this as return, this will exit processFile for this file
                 }
                 
                 // Find the text in the line
