@@ -82,6 +82,109 @@ It's recommended to add this file to your `.gitignore`:
 
 This prevents the rejection history from being shared between developers, as preferences for which strings to escape may vary across projects and teams.
 
+## For Developers
+
+### Code Structure
+
+The tool is organized into several modules in the `src/lib` directory:
+
+- `index.js` - Main entry point that handles CLI arguments and orchestrates the process
+- `eslint.js` - ESLint integration using Vercel's Next.js ESLint config to find unescaped entities
+- `processor.js` - Core file processing logic, handles applying fixes and user interaction
+- `ast.js` - AST traversal for finding string literals that need escaping
+- `fixes.js` - Manages the rejection history and fix tracking
+- `ui.js` - User interface components (context display, keypress handling)
+- `logger.js` - Logging utilities with color-coded output
+- `file.js` - File I/O operations and safety checks
+- `escape.js` - String escaping logic and pattern detection
+- `config.js` - Global configuration and constants
+
+### How It Works
+
+1. **File Discovery**
+   - Uses `globby` to find JavaScript/TypeScript files
+   - Ignores common directories like `node_modules`, `dist`, `build`
+
+2. **Entity Detection**
+   - Primary method: Uses ESLint with Vercel's Next.js config to find unescaped entities
+   - Fallback method: AST traversal for string literals and JSX text nodes
+   - Detects quotes (`'`, `"`), ampersands (`&`), and angle brackets (`<`, `>`)
+
+3. **Fix Processing**
+   - Groups fixes by file for efficient processing
+   - Shows context around each fix (3 lines by default, 7 lines with 'c')
+   - Handles both JSX text nodes and string literals differently
+   - Preserves whitespace and formatting
+   - Prevents double-escaping of already escaped entities
+
+4. **Safety Features**
+   - Verifies file modifications before writing
+   - Checks for corrupted escapes
+   - Handles multiline text carefully
+   - Preserves JSX tags and attributes
+   - Tracks rejected fixes to avoid re-prompting
+
+5. **User Interaction**
+   - Interactive prompts for each fix
+   - Context viewing with line numbers
+   - Clear success/error messages
+   - Progress logging with color coding
+
+### Development
+
+To work on the tool:
+
+```bash
+# Clone the repository
+git clone https://github.com/claren/literal-hell.git
+cd literal-hell
+
+# Install dependencies
+npm install
+
+# Run tests (when implemented)
+npm test
+
+# Build
+npm run build
+
+# Link for local development
+npm link
+```
+
+### Adding Features
+
+When adding new features:
+1. Follow the modular structure
+2. Add appropriate logging
+3. Handle errors gracefully
+4. Update tests (when implemented)
+5. Document changes in README
+
+### Key Design Decisions
+
+1. **ESLint Integration**
+   - Uses Vercel's Next.js ESLint config to match production behavior
+   - Falls back to AST traversal if ESLint fails
+   - Processes all files in a single ESLint run for efficiency
+
+2. **Fix Application**
+   - Processes fixes from end to start to avoid position shifts
+   - Different handling for JSX vs string literals
+   - Preserves file formatting and whitespace
+
+3. **User Experience**
+   - Shows context by default
+   - Color-coded output
+   - Clear success/error messages
+   - Interactive but non-blocking
+
+4. **Safety**
+   - Verifies changes before writing
+   - Prevents double-escaping
+   - Handles file modifications
+   - Preserves JSX structure
+
 ## Contributing
 
 This tool was originally a solo vibe coding project, but contributions to improve it are welcome!
@@ -117,8 +220,7 @@ Under the following terms:
 - You must include the original copyright and license notice in any copy of the software
 - Attribution is appreciated but not required
 
-```
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+```THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
